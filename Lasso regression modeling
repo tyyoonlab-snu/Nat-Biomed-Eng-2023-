@@ -1,0 +1,72 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+from sklearn.linear_model import Lasso
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+#from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
+
+data=pd.read_excel('/Users/hwlee/Downloads/media-2.xlsx', index_col=0, sheet_name='Supplementary Table 2')
+
+ydata='ABT-199'
+data=data[~(data[ydata].isnull())]
+#ABT-199 Ex vivo response classification
+data['class']='N'
+data['class'][(data[ydata]>0.6)]='R' 
+
+#Remove a metric if it was not measurable in 10 or more samples
+tf=(data==6.643856189774725).sum(axis=0)
+params_remove=tf[tf>9].index.to_list() 
+data.drop(params_remove, axis=1, inplace=True)
+
+#The metric for BCL2-BAK complex assay was dropped due to low sensitivity of the assay
+data.drop(['BCL2-BAK'], axis=1, inplace=True) 
+
+#Transform the value of 6.643856189774725 to 0; this value is an artificial value generated through log-transformation.
+data_only=data.iloc[:,:-3]
+data_only[data.iloc[:,:-3]==6.643856189774725]=0
+data.iloc[:,:-3]=data_only
+
+df_coef=pd.DataFrame([])
+label=data.columns[:-3].tolist()
+df_coef['params']=label
+df_coef[['P', 'N']]=0
+score=[]
+coef=[]
+test_idx=[]
+i=0
+
+while i<5000:
+    train, test=train_test_split(data, test_size=0.3, stratify=data['class'])
+    x_train=train.iloc[:,:-3]
+    y_train=train[ydata]
+    x_test=test.iloc[:,:-3]
+    y_test=test[ydata]
+    
+    if sum([test.index.equals(x) for x in test_idx])==0:
+        test_idx.append(test.index)
+    else:
+        i+=1
+        continue    
+    
+    model = Lasso(alpha=0.035)  
+    model.fit(x_train, y_train)
+    y_pred = model.predict(x_test)
+    mse = mean_squared_error(y_test, y_pred)
+    if (model.score(x_train, y_train)<0.75) | (model.score(x_test, y_test)<0.7):
+        i+=1
+        continue
+    score.append([model.score(x_train, y_train), model.score(x_test, y_test)])
+
+    coef.append(model.coef_)
+    df_coef['coef']=model.coef_
+    df_coef['P']=df_coef['P']+(df_coef['coef']>0)
+    df_coef['N']=df_coef['N']-(df_coef['coef']<0)
+    i+=1
+
+coefs=pd.DataFrame(coef, columns=label)
+g=sns.catplot(data=coefs, kind='swarm', aspect=5)
+g.set_xticklabels(rotation=90)
+g.ax.axhline(y=0)
+g.tight_layout()
