@@ -1,0 +1,38 @@
+function [R_temp, B, gh] = ML_Fig_new(data, res)
+
+%nexttile
+%[R,P,RL,RU] = corrcoef(data, res)
+B=fitlm(data, res);
+%[ypred, yci]=predict(B,data, 'Alpha', 0.05);
+%y=[yci(:,1), ypred, yci(:,2)];
+B2=fitlm(B.Fitted, res);
+gh=plot(B2);
+t=[gh(1).XData', gh(1).YData'];
+set(gh(1), 'Marker', '.', 'MarkerSize', 20, 'Color', 'b');
+set(gh(2), 'LineWidth', 3);
+set(gh(3), 'LineStyle', '--','LineWidth', 0.75,'Color', 'red');
+set(gh(4), 'LineStyle', '--','LineWidth', 0.75,'Color', 'red');
+
+%xlabel('PPI score')
+%ylabel('norm AUC');
+[R_temp, p_temp, RL, RU]=corrcoef(B.Fitted, res);
+%title([R_temp(1,2)]);
+title({
+    ['R=', num2str(R_temp(1,2))] 
+    ['CI=[', num2str(RL(1,2)), ' - ' ,num2str(RU(1,2)), ']']
+    ['p=', num2str(p_temp(1,2))]
+    });     legend off;
+coef=B.Coefficients.Estimate;
+B.Coefficients
+score=data*coef(2:end)+coef(1);
+pbaspect([1 1 1]);
+alpha=0.1;
+scale_x=max(t(:,1))-min(t(:,1));
+scale_y=max(t(:,2))-min(t(:,2));
+%xlim([min(t(:,1))-scale_x*alpha max(t(:,1))+scale_x*alpha]);
+%ylim([min(t(:,2))-scale_y*alpha max(t(:,2))+scale_y*alpha]);
+ylim([0 1]);
+%ylim([min(B.Fitted)-0.15 max(B.Fitted)+0.15]);
+xlim([min(B.Fitted)-0.05 max(B.Fitted)+0.05]);
+
+end
