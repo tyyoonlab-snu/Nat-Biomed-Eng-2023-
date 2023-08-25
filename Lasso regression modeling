@@ -37,7 +37,7 @@ coef=[]
 test_idx=[]
 i=0
 
-while i<5000:
+while i<10000:
     train, test=train_test_split(data, test_size=0.3, stratify=data['class'])
     x_train=train.iloc[:,:-3]
     y_train=train[ydata]
@@ -50,7 +50,7 @@ while i<5000:
         i+=1
         continue    
     
-    model = Lasso(alpha=0.035)  
+    model = Lasso(alpha=0.03)  
     model.fit(x_train, y_train)
     y_pred = model.predict(x_test)
     mse = mean_squared_error(y_test, y_pred)
@@ -70,3 +70,4 @@ g=sns.catplot(data=coefs, kind='swarm', aspect=5)
 g.set_xticklabels(rotation=90)
 g.ax.axhline(y=0)
 g.tight_layout()
+plt.show()
