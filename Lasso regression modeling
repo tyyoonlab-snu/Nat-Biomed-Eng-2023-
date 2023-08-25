@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 #from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
 
+#Put the data file 'PPI profiles and drug responses.xlsx' to the adequate path
 data=pd.read_excel('/Users/PPI profiles and drug responses.xlsx', index_col=0, sheet_name='PPI profiles and drug response')
 
 ydata='ABT-199'
